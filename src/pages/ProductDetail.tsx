@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -17,9 +17,35 @@ const ProductDetail = () => {
   const addItem = useCartStore(state => state.addItem);
   const cartLoading = useCartStore(state => state.isLoading);
 
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
+  const images = product?.images?.edges || [];
+  const variants = product?.variants?.edges || [];
+  
+  const selectedVariant = variants.find(v => 
+    v.node.selectedOptions.every(opt => selectedOptions[opt.name] === opt.value)
+  )?.node || variants[0]?.node;
+
+  useEffect(() => {
+    if (product?.variants?.edges?.length > 0) {
+      const defaultOptions: Record<string, string> = {};
+      product.variants.edges[0].node.selectedOptions.forEach(opt => {
+        defaultOptions[opt.name] = opt.value;
+      });
+      setSelectedOptions(defaultOptions);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (selectedVariant?.image?.url) {
+      const variantImageIndex = images.findIndex(img => img.node.url === selectedVariant.image?.url);
+      if (variantImageIndex >= 0) {
+        setSelectedImageIndex(variantImageIndex);
+      }
+    }
+  }, [selectedVariant, images]);
 
   if (isLoading) {
     return (
@@ -46,9 +72,6 @@ const ProductDetail = () => {
     );
   }
 
-  const images = product.images.edges;
-  const variants = product.variants.edges;
-  const selectedVariant = variants[selectedVariantIndex]?.node;
   const price = selectedVariant ? parseFloat(selectedVariant.price.amount) : 0;
   const compareAt = selectedVariant?.compareAtPrice ? parseFloat(selectedVariant.compareAtPrice.amount) : null;
   const hasDiscount = compareAt && compareAt > price;
@@ -146,15 +169,25 @@ const ProductDetail = () => {
                   <p className="text-sm font-medium text-foreground mb-2">{option.name}</p>
                   <div className="flex flex-wrap gap-2">
                     {option.values.map((value) => {
-                      const variantIdx = variants.findIndex(v =>
-                        v.node.selectedOptions.some(o => o.name === option.name && o.value === value)
+                      const isSelected = selectedOptions[option.name] === value;
+                      
+                      // Check if this combination is available
+                      const potentialOptions = { ...selectedOptions, [option.name]: value };
+                      const isAvailable = variants.some(v => 
+                        v.node.selectedOptions.every(opt => potentialOptions[opt.name] === opt.value)
                       );
-                      const isSelected = variantIdx === selectedVariantIndex;
+
                       return (
                         <button
                           key={value}
-                          onClick={() => { setSelectedVariantIndex(variantIdx >= 0 ? variantIdx : 0); }}
-                          className={`px-4 py-2 rounded-lg text-sm border-2 transition-all ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary'}`}
+                          onClick={() => {
+                            setSelectedOptions(prev => ({ ...prev, [option.name]: value }));
+                          }}
+                          className={`px-4 py-2 rounded-lg text-sm border-2 transition-all ${
+                            isSelected 
+                              ? 'border-primary bg-primary text-primary-foreground' 
+                              : 'border-border hover:border-primary'
+                          } ${!isAvailable && !isSelected ? '' : ''}`}
                         >
                           {value}
                         </button>
