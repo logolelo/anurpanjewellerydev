@@ -1,6 +1,6 @@
 export const CATEGORIES = {
-  'Silver 925': ['Earrings', 'Rings', 'Necklace', 'Chains', 'Pendant', 'Mangalsutra', 'Bracelets', 'Nose Pin', 'Charms'],
-  'Imitation': ['Earrings', 'Rings', 'Necklace', 'Chains', 'Pendant', 'Mangalsutra', 'Bracelets', 'Nose Pin', 'Charms'],
+  'Silver 925': ['Earrings', 'Rings', 'Necklace', 'Chains', 'Pendant', 'Mangalsutra', 'Bracelets', 'Nose Pin', 'Charms', 'Brooches'],
+  'Imitation': ['Earrings', 'Rings', 'Necklace', 'Chains', 'Pendant', 'Mangalsutra', 'Bracelets', 'Nose Pin', 'Charms', 'Brooches'],
 } as const;
 
 export const COLLECTIONS = [
